@@ -2,7 +2,7 @@
   "name": "Relative Time",
   "short_name": "Relative Time",
   "description": "Compare times across cities around the world",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1a6fda",
