@@ -1328,6 +1328,14 @@
 
       attachModalDismiss();
 
+      document.addEventListener('keydown', e => {
+        if ((e.key === 'Backspace' || e.key == 'Delete') && selectedId) {
+          const tag = document.activeElement?.tagName;
+          if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+          removeCity(selectedId);
+        }
+      });
+
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => { });
     }
 
