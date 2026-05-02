@@ -752,6 +752,7 @@
 
     let cities = [], selectedId = null, scrubMinutes = null, isLive = true, liveTimer = null;
     let nominatimDebounce = null, timeEditAmpmVal = 'AM';
+    let lastTapAt = 0, lastTapId = null;
 
     // ── STORAGE ──
     function saveState() { localStorage.setItem('rt_cities_v2', JSON.stringify(cities)); if (selectedId) localStorage.setItem('rt_sel_v2', selectedId); }
@@ -845,6 +846,9 @@
     function showGeo(msg) { const el = document.getElementById('geoStatus'); el.textContent = msg; el.classList.add('show'); }
     function hideGeo() { document.getElementById('geoStatus').classList.remove('show'); }
 
+    let toastTimer = null;
+    function showToast(msg) { clearTimeout(toastTimer); showGeo(msg); toastTimer = setTimeout(hideGeo, 1500); }
+
     // ── CITY MANAGEMENT ──
     function addCity(name, tz, isLocal = false) {
       if (cities.find(c => c.city === name && c.tz === tz)) return;
@@ -922,6 +926,16 @@
       row.addEventListener('click', e => {
         if (row._swipeOpen) return;
         if (row._dragging) return;
+        const now = Date.now();
+        if (c.id === lastTapId && now - lastTapAt < 300) {
+          lastTapAt = 0; lastTapId = null;
+          const abs = getCurrentAbsoluteDate();
+          const { time, ampm } = fmtTz(c.tz, abs);
+          copyToClipboard(`${time} ${ampm} (${c.city})`);
+          showToast('Copied!');
+          return;
+        }
+        lastTapAt = now; lastTapId = c.id;
         selectCity(c.id);
       });
 
@@ -1264,6 +1278,24 @@
     }
 
     function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { document.execCommand('copy'); } catch (e) { }
+      document.body.removeChild(ta);
+    }
 
     // ── INIT ──
     function init() {
